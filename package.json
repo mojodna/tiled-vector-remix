@@ -1,0 +1,24 @@
+{
+  "name": "tiled-vector-remix",
+  "version": "0.0.0",
+  "description": "Mix and match tiled vector layers",
+  "main": "index.js",
+  "author": "Seth Fitzsimmons <seth@mojodna.net>",
+  "homepage": "https://github.com/mojodna/tiled-vector-remix",
+  "bugs": "https://github.com/mojodna/tiled-vector-remix/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mojodna/tiled-vector-remix.git"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "mapnik": "https://github.com/mojodna/node-mapnik/archive/vector-layers.tar.gz",
+    "express": "~3.4.0",
+    "cors": "~2.1.0",
+    "async": "~0.2.9",
+    "sphericalmercator": "~1.0.2",
+    "crequest": "~0.1.1",
+    "lru-cache": "~2.3.1",
+    "generic-pool": "~2.0.4"
+  }
+}

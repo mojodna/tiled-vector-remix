@@ -1,0 +1,274 @@
+{
+  "mapbox.mapbox-streets-v3": {
+    "vector_layers": [
+      {
+        "minzoom": 7,
+        "id": "landuse",
+        "geometry": "polygon",
+        "fields": {
+          "class": "String. (cemetery, hospital, industrial, park, parking, pitch, sand, school, wood)."
+        },
+        "description": "Land use and land cover areas."
+      },
+      {
+        "minzoom": 8,
+        "id": "waterway",
+        "geometry": "line",
+        "fields": {
+          "type": "String. (canal, ditch, drain, river, stream)."
+        },
+        "description": "Rivers, streams, and other waterways."
+      },
+      {
+        "id": "water",
+        "geometry": "polygon",
+        "description": "Oceans, lakes, ponds, and other bodies of water."
+      },
+      {
+        "minzoom": 10,
+        "id": "aeroway",
+        "geometry": "line",
+        "fields": {
+          "type": "String. (apron, taxiway, helipad, runway)."
+        },
+        "description": "Aeroway runways and areas."
+      },
+      {
+        "minzoom": 14,
+        "id": "barrier_line",
+        "geometry": "line",
+        "fields": {
+          "class": "String. (gate, fence, hedge, land)."
+        },
+        "description": "Various barriers."
+      },
+      {
+        "minzoom": 13,
+        "id": "building",
+        "geometry": "polygon",
+        "description": "Building footprints."
+      },
+      {
+        "minzoom": 8,
+        "id": "landuse_overlay",
+        "geometry": "polygon",
+        "fields": {
+          "class": "String. (breakwater, pier, wetland, wetland_noveg)."
+        },
+        "description": "Overlay shapes for landuse."
+      },
+      {
+        "minzoom": 12,
+        "id": "tunnel",
+        "geometry": "line",
+        "fields": {
+          "oneway": "Number. (1 or 0).",
+          "class": "String. (motorway, main, street, street_limited, major_rail, minor_rail, service, path, driveway)."
+        },
+        "description": "Underground tunnels."
+      },
+      {
+        "minzoom": 5,
+        "id": "road",
+        "geometry": "line",
+        "fields": {
+          "oneway": "Number. (1 or 0).",
+          "class": "String. (motorway, main, street, street_limited, major_rail, minor_rail, service, path, driveway)."
+        },
+        "description": "Ground level roads."
+      },
+      {
+        "minzoom": 12,
+        "id": "bridge",
+        "geometry": "line",
+        "fields": {
+          "oneway": "Number. (1 or 0).",
+          "class": "String. (motorway, main, street, street_limited, major_rail, minor_rail, service, path, driveway)."
+        },
+        "description": "Above ground bridges."
+      },
+      {
+        "minzoom": 2,
+        "id": "admin",
+        "geometry": "line",
+        "fields": {
+          "maritime": "Number. (1 or 0).",
+          "disputed": "Number. (1 or 0).",
+          "admin_level": "Number. Administrative level."
+        },
+        "description": "Administrative (country, province) boundaries."
+      },
+      {
+        "minzoom": 3,
+        "maxzoom": 6,
+        "id": "country_label_line",
+        "geometry": "line",
+        "fields": {
+          "z_min": "Number. Recommended min zoom level to show line.",
+          "z_max": "Number. Recommended max zoom level to show line."
+        },
+        "description": "Helper lines for country labels in dense areas."
+      },
+      {
+        "minzoom": 2,
+        "maxzoom": 10,
+        "id": "country_label",
+        "geometry": "point",
+        "fields": {
+          "scalerank": "Number. Rank of label importance.",
+          "name_en": "String. English.",
+          "name": "String. Localized."
+        },
+        "description": "Country labels."
+      },
+      {
+        "minzoom": 3,
+        "maxzoom": 7,
+        "id": "marine_label",
+        "geometry": "point",
+        "fields": {
+          "placement": "String. (point or line).",
+          "name_en": "String. English.",
+          "name": "String. Localized.",
+          "labelrank": "Number. Rank of label importance."
+        },
+        "description": "Labels for oceans, seas, and other bodies of water."
+      },
+      {
+        "minzoom": 4,
+        "maxzoom": 10,
+        "id": "state_label",
+        "geometry": "point",
+        "fields": {
+          "name_en": "String. English.",
+          "name": "String. Localized."
+        },
+        "description": "State and province labels."
+      },
+      {
+        "minzoom": 4,
+        "id": "place_label",
+        "geometry": "point",
+        "fields": {
+          "type": "String. (city, town, village, hamlet, neighbourhood).",
+          "scalerank": "Number. Rank of label importance for major cities.",
+          "name_en": "String. English.",
+          "name": "String. Localized.",
+          "ldir": "Number. Label direction hint for major cities."
+        },
+        "description": "Places."
+      },
+      {
+        "minzoom": 8,
+        "id": "water_label",
+        "geometry": "point",
+        "fields": {
+          "name_en": "String. English.",
+          "name": "String. Localized.",
+          "area": "Number. Geographic area."
+        },
+        "description": "Labels for water areas."
+      },
+      {
+        "minzoom": 8,
+        "id": "area_label",
+        "geometry": "point",
+        "fields": {
+          "name_en": "String. English.",
+          "name": "String. Localized.",
+          "class": "String. (cemetery, hospital, industrial, island, park, parking, pitch, sand, school, wetland, wetland_noveg, wood).",
+          "area": "Number. Geographic area."
+        },
+        "description": "Labels for landuse areas."
+      },
+      {
+        "minzoom": 14,
+        "id": "rail_station_label",
+        "geometry": "point",
+        "fields": {
+          "osm_id": "Number. OSM ID.",
+          "network": "String. Rail network.",
+          "name_en": "String. English.",
+          "name": "String. Localized.",
+          "group": "String (name, network). Field used to group stations.",
+          "class": "String (subway, light, rail)."
+        },
+        "description": "Train and subway stations."
+      },
+      {
+        "minzoom": 10,
+        "id": "airport_label",
+        "geometry": "point",
+        "fields": {
+          "ref": "String. Reference code.",
+          "name_en": "String. English.",
+          "name": "String. Localized.",
+          "class": "String (default, international, military, heliport).",
+          "area": "Number. Geographic area."
+        },
+        "description": "Airports."
+      },
+      {
+        "minzoom": 10,
+        "id": "road_label",
+        "geometry": "line",
+        "fields": {
+          "reflen": "Number. Ref length.",
+          "ref": "String. Reference code.",
+          "name_en": "String. English.",
+          "name": "String. Localized.",
+          "class": "String (motorway, main, street, pedestrian, path, service)."
+        },
+        "description": "Labels for roads, tunnels, bridges."
+      },
+      {
+        "minzoom": 13,
+        "id": "waterway_label",
+        "geometry": "line",
+        "fields": {
+          "type": "String (river, stream, canal).",
+          "name_en": "String. English.",
+          "name": "String. Localized."
+        },
+        "description": "Labels for waterways."
+      },
+      {
+        "minzoom": 13,
+        "id": "building_label",
+        "geometry": "point",
+        "fields": {
+          "name_en": "String. English.",
+          "name": "String. Localized.",
+          "area": "The size of the building in Mercator square meters."
+        },
+        "description": "Labels for buildings."
+      }
+    ],
+    "tiles": [
+      "http://a.tiles.mapbox.com/v3/mapbox.mapbox-streets-v3/{z}/{x}/{y}.vector.pbf",
+      "http://b.tiles.mapbox.com/v3/mapbox.mapbox-streets-v3/{z}/{x}/{y}.vector.pbf",
+      "http://c.tiles.mapbox.com/v3/mapbox.mapbox-streets-v3/{z}/{x}/{y}.vector.pbf",
+      "http://d.tiles.mapbox.com/v3/mapbox.mapbox-streets-v3/{z}/{x}/{y}.vector.pbf"
+    ],
+    "tilejson": "2.0.0",
+    "scheme": "xyz",
+    "name": "MapBox Streets V3",
+    "attribution": "<a href='http://mapbox.com/about/maps' target='_blank'>Terms & Feedback</a>",
+    "bounds": [
+      -180,
+      -85.0511,
+      180,
+      85.0511
+    ],
+    "center": [
+      0,
+      0,
+      0
+    ],
+    "format": "pbf",
+    "id": "mapbox.mapbox-streets-v3",
+    "maskLevel": 8,
+    "maxzoom": 14,
+    "minzoom": 0
+  }
+}
