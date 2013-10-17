@@ -54,7 +54,7 @@ var pool = new Pool({
   },
   // TODO (from tilelive-mapnik): need a smarter way to scale this. More maps
   // in pool seems better for PostGIS.
-  max: require('os').cpus().length
+  max: os.cpus().length
 });
 
 var fetch = function(task, callback) {
@@ -156,7 +156,9 @@ app.get("/:layers/:z/:x/:y.vtile", function(req, res) {
   var headers = {};
 
   Object.keys(req.headers).forEach(function(key) {
-    if (["user-agent", "referer", "x-forwarded-for"].indexOf(key) >= 0) {
+    if (["user-agent",
+         "referer",
+         "x-forwarded-for"].indexOf(key) >= 0) {
       headers[key] = req.headers[key];
     }
   });
@@ -200,6 +202,7 @@ app.get("/:layers/:z/:x/:y.vtile", function(req, res) {
       });
 
       map.extent = mercator.bbox(x, y, z, false, "900913");
+
       var opts = {
         tolerance: 0,
         simplify: 0,
