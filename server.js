@@ -212,6 +212,18 @@ app.get("/:layers/:z/:x/:y.vtile", function(req, res) {
 
       return map.render(new mapnik.VectorTile(z, x, y), opts, function(err, dst) {
 
+        var roads = tiles[0].toJSON().filter(function(layer) {
+          return layer.name === "road";
+        })[0];
+
+        console.log("source road count:", roads.features.length);
+
+        roads = dst.toJSON().filter(function(layer) {
+          return layer.name === "road";
+        })[0];
+
+        console.log("target road count:", roads.features.length);
+
         if (err) {
           console.warn(err);
           return res.send(500);
@@ -263,7 +275,7 @@ app.get("/:layers.json", function(req, res) {
   return res.send({
     "attribution": "",
     "bounds": [ -180, -85.0511, 180, 85.0511 ],
-    "center": [ 0, 0, 0 ],
+    "center": [ -122.3782, 37.7706, 12 ],
     "format": "pbf",
     "id": "custom.custom-vtiles",
     "maskLevel": 8, // TODO
