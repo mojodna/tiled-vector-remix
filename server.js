@@ -1,6 +1,7 @@
 "use strict";
 
 var http = require("http"),
+    os = require("os"),
     util = require("util"),
     zlib = require("zlib");
 
@@ -128,12 +129,8 @@ var fetch = function(task, callback) {
   });
 };
 
-app.get("/:layers/:z/:x/:y.vector.pbf", function(req, res) {
-  var z = +req.params.z,
-      x = +req.params.x,
-      y = +req.params.y;
-
-  var sources = req.params.layers.split(",")
+var getSources = function(layers) {
+  return layers.split(",")
     .map(function(source) {
       var matches = source.trim().match(/([\w\.\-]+)(\[([\w;]+)\])?/);
 
@@ -146,7 +143,14 @@ app.get("/:layers/:z/:x/:y.vector.pbf", function(req, res) {
         })
       };
     });
+};
 
+app.get("/:layers/:z/:x/:y.vtile", function(req, res) {
+  var z = +req.params.z,
+      x = +req.params.x,
+      y = +req.params.y;
+
+  var sources = getSources(req.params.layers);
 
   // be a good citizen and pass relevant headers on
   var headers = {};
@@ -196,9 +200,14 @@ app.get("/:layers/:z/:x/:y.vector.pbf", function(req, res) {
       });
 
       map.extent = mercator.bbox(x, y, z, false, "900913");
+      var opts = {
+        tolerance: 0,
+        simplify: 0,
+        simplify_algorithm: "radial-distance",
+        buffer_size: map.bufferSize
+      };
 
-      return map.render(new mapnik.VectorTile(z, x, y), function(err, dst) {
-        pool.release(map);
+      return map.render(new mapnik.VectorTile(z, x, y), opts, function(err, dst) {
 
         if (err) {
           console.warn(err);
@@ -206,6 +215,8 @@ app.get("/:layers/:z/:x/:y.vector.pbf", function(req, res) {
         }
 
         return zlib.deflate(dst.getData(), function(err, data) {
+          pool.release(map);
+
           if (err) {
             console.warn(err);
           }
@@ -230,6 +241,38 @@ app.get("/:layers/:z/:x/:y.vector.pbf", function(req, res) {
         });
       });
     });
+  });
+});
+
+app.get("/:layers.json", function(req, res) {
+  var sources = getSources(req.params.layers);
+
+  // TODO sort this when multiple layers are specified in a different order
+  // like "mapbox.mapbox-streets-v3[waterway;landuse]"
+  var vectorLayers = sources.map(function(source) {
+    return SOURCES[source.source].vector_layers.filter(function(layer) {
+      return source.layers.indexOf(layer.id) >= 0;
+    });
+  }).reduce(function(a, b) {
+    return a.concat(b);
+  }, []);
+
+  return res.send({
+    "attribution": "",
+    "bounds": [ -180, -85.0511, 180, 85.0511 ],
+    "center": [ 0, 0, 0 ],
+    "format": "pbf",
+    "id": "custom.custom-vtiles",
+    "maskLevel": 8, // TODO
+    "maxzoom": 14, // TODO
+    "minzoom": 0, // TODO
+    "name": "Tiled Vector Remix",
+    "scheme": "xyz",
+    "tilejson": "2.0.0",
+    "tiles": [
+      util.format("http://%s:%d/%s/{z}/{x}/{y}.vtile", os.hostname(), 8080, req.params.layers)
+    ],
+    "vector_layers": vectorLayers
   });
 });
 
