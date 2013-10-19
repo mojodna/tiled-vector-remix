@@ -49,6 +49,10 @@ var pool = new Pool({
 
     return callback(null, map);
   },
+  validate: function(map) {
+    // no way to clear layers on a mapnik.Map instance
+    return false;
+  },
   destroy: function(map) {
     // noop
   },
