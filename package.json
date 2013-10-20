@@ -17,8 +17,8 @@
     "cors": "~2.1.0",
     "async": "~0.2.9",
     "sphericalmercator": "~1.0.2",
-    "crequest": "~0.1.1",
+    "crequest": "~0.1.2",
     "lru-cache": "~2.3.1",
-    "generic-pool": "~2.0.4"
+    "d3": "~3.3.8"
   }
 }

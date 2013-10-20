@@ -7,10 +7,10 @@ var http = require("http"),
 
 var async = require("async"),
     cors = require("cors"),
+    d3 = require("d3"),
     express = require("express"),
     LRU = require("lru-cache"),
     mapnik = require("mapnik"),
-    Pool = require("generic-pool").Pool,
     request = require("crequest"),
     mercator = new (require("sphericalmercator"))();
 
@@ -34,31 +34,12 @@ var CACHE_SIZE = process.env.CACHE_SIZE || 10,
 var cache = LRU({
   max: CACHE_SIZE * 1024 * 1024,
   length: function(x) {
-    return x.length;
+    return x.size();
   }
 });
 
 var locks = LRU({
   maxAge: REQUEST_TIMEOUT * 1.1 // 10% longer than REQUEST_TIMEOUT
-});
-
-var pool = new Pool({
-  create: function(callback) {
-    var map = new mapnik.Map(256, 256);
-    map.bufferSize = 0;
-
-    return callback(null, map);
-  },
-  validate: function(map) {
-    // no way to clear layers on a mapnik.Map instance
-    return false;
-  },
-  destroy: function(map) {
-    // noop
-  },
-  // TODO (from tilelive-mapnik): need a smarter way to scale this. More maps
-  // in pool seems better for PostGIS.
-  max: os.cpus().length
 });
 
 var fetch = function(task, callback) {
@@ -76,8 +57,22 @@ var fetch = function(task, callback) {
   // lock the request
   locks.set(key, true);
 
-  var s = SOURCES[task.source.source];
-  var url = s.tiles[~~(Math.random() * s.tiles.length)]
+  // TODO default source.{minzoom,maxzoom,bounds}
+  var source = SOURCES[task.source.source];
+
+  var xyz = mercator.xyz(source.bounds, task.z);
+
+  if (task.z < (source.minzoom || -Infinity) ||
+      task.z > (source.maxzoom || Infinity) ||
+      task.x < xyz.minX ||
+      task.x > xyz.maxX ||
+      task.y < xyz.minY ||
+      task.y > xyz.maxY) {
+    // outsize zoom range or bounds; skip
+    return callback();
+  }
+
+  var url = source.tiles[~~(Math.random() * source.tiles.length)]
       .replace(/{z}/i, task.z)
       .replace(/{x}/i, task.x)
       .replace(/{y}/i, task.y);
@@ -97,46 +92,140 @@ var fetch = function(task, callback) {
       return callback(err);
     }
 
-    if (res.statusCode === 200) {
-      tile = new mapnik.VectorTile(task.z, task.x, task.y);
-      tile.source = task.source;
+    switch (res.statusCode) {
+    case 200:
+      switch (source.format.toLowerCase()) {
+      case "pbf":
+        tile = new mapnik.VectorTile(task.z, task.x, task.y);
+        tile.source = task.source;
+        tile.size = function() {
+          return this.getData().length;
+        };
 
-      // attach TTL
-      if (res.headers["cache-control"]) {
-        tile.ttl = (res.headers["cache-control"] || "").split(",").map(function(c) {
-          return c.trim();
-        }).filter(function(c) {
-          return c.match(/^max-age=/);
-        }).map(function(c) {
-          return +c.split("=")[1];
-        })[0];
-      }
-
-      // lock the request again since we have data
-      locks.set(key, true);
-
-      return tile.setData(body, function(err) {
-        // unlock the request
-        locks.del(key);
-
-        if (err) {
-          return callback(err);
+        // attach TTL
+        if (res.headers["cache-control"]) {
+          tile.ttl = (res.headers["cache-control"] || "").split(",").map(function(c) {
+            return c.trim();
+          }).filter(function(c) {
+            return c.match(/^max-age=/);
+          }).map(function(c) {
+            return +c.split("=")[1];
+          })[0];
         }
 
-        cache.set(key, tile);
+        // lock the request again since we have data
+        locks.set(key, true);
 
-        return callback(null, tile);
-      });
+        return tile.setData(body, function(err) {
+          // unlock the request
+          locks.del(key);
+
+          if (err) {
+            return callback(err);
+          }
+
+          cache.set(key, tile);
+
+          return callback(null, tile);
+        });
+
+      case "geojson":
+        tile = {};
+        tile.source = task.source;
+        tile._size = 0;
+        tile.size = function() {
+          return this._size;
+        };
+
+        // attach TTL
+        if (res.headers["cache-control"]) {
+          tile.ttl = (res.headers["cache-control"] || "").split(",").map(function(c) {
+            return c.trim();
+          }).filter(function(c) {
+            return c.match(/^max-age=/);
+          }).map(function(c) {
+            return +c.split("=")[1];
+          })[0];
+        }
+
+        locks.set(key, true);
+
+        return async.map(source.vector_layers, function(info, next) {
+          // approximate size
+          tile._size += res.body.length;
+
+          var layer = new mapnik.Layer(info.id);
+          layer.srs = "+init=epsg:4326";
+
+          var fields = Object.keys(info.fields);
+
+          var data = body.features.map(function(f) {
+            var row = [JSON.stringify(f.geometry)];
+
+            fields.map(function(k) {
+              row.push(f.properties[k]);
+            });
+
+            return row;
+          });
+
+          if (body.features.length > 0) {
+            var csv = d3.csv.formatRows([["geojson"].concat(fields)]) + "\n";
+            csv += d3.csv.formatRows(data);
+
+            try {
+              layer.datasource = new mapnik.Datasource({
+                type: "csv",
+                inline: csv
+              });
+            } catch (e) {
+              console.log(csv);
+              return next(e);
+            }
+          } else {
+            layer = null;
+          }
+
+          return next(null, layer);
+        }, function(err, layers) {
+          locks.del(key);
+
+          if (err) {
+            return callback(err);
+          }
+
+          layers = layers.filter(function(x) {
+            return !!x;
+          });
+
+          tile.layers = function() {
+            return layers;
+          };
+
+          cache.set(key, tile);
+
+          return callback(null, tile);
+        });
+
+      default:
+        return callback(new Error("Unsupported source format: " + source.format));
+      }
+
+      break;
+
+    case 404:
+      return callback();
+
+    default:
+      return callback(new Error(res.statusCode + ": " + body.toString()));
     }
-
-    return callback(new Error(res.statusCode + ": " + body.toString()));
   });
 };
 
 var getSources = function(layers) {
   return layers.split(",")
     .map(function(source) {
-      var matches = source.trim().match(/([\w\.\-]+)(\[([\w;]+)\])?/);
+      var matches = source.trim().match(/([\w\.\-]+)(\[([\w\-;]+)\])?/);
 
       return {
         source: matches[1].trim(),
@@ -183,113 +272,138 @@ app.get("/:layers/:z/:x/:y.vtile", function(req, res) {
       return res.send(500);
     }
 
+    // ignore skipped tiles
+    tiles = tiles.filter(function(tile) {
+      return !!tile;
+    });
+
     var sourceLayers = {};
 
-    return pool.acquire(function(err, map) {
+    var map = new mapnik.Map(256, 256);
+
+    tiles.forEach(function(tile) {
+      tile.layers().filter(function(x) {
+        return tile.source.layers.length === 0 ||
+              tile.source.layers.indexOf(x.name) >= 0;
+      }).forEach(function(layer) {
+        // NOTE: if a layer with the same name appears more than once, the last
+        // one present will be rendered
+        sourceLayers[layer.name] = layer;
+      });
+
+      var layers = tile.source.layers;
+
+      if (layers.length === 0) {
+        layers = Object.keys(sourceLayers);
+      }
+
+      layers.forEach(function(name) {
+        if (sourceLayers[name]) {
+          map.add_layer(sourceLayers[name]);
+        }
+      });
+    });
+
+    map.extent = mercator.bbox(x, y, z, false, "900913");
+    map.srs = "+init=epsg:3857";
+
+    var opts = {
+      tolerance: 0,
+      simplify: 0,
+      simplify_algorithm: "radial-distance",
+      buffer_size: map.bufferSize
+    };
+
+    return map.render(new mapnik.VectorTile(z, x, y), opts, function(err, dst) {
+
+      // For debugging "dropped" features when filtering/reordering PBFs
+      // var roads = tiles[0].toJSON().filter(function(layer) {
+      //   return layer.name === "road";
+      // })[0];
+
+      // console.log("source road count:", roads.features.length);
+
+      // roads = dst.toJSON().filter(function(layer) {
+      //   return layer.name === "road";
+      // })[0];
+
+      // console.log("target road count:", roads.features.length);
+
       if (err) {
         console.warn(err);
         return res.send(500);
       }
 
-      tiles.forEach(function(tile) {
-        tile.layers().filter(function(x) {
-          return tile.source.layers.indexOf(x.name) >= 0;
-        }).forEach(function(layer) {
-          // NOTE: if a layer with the same name appears more than once, the last
-          // one present will be rendered
-          sourceLayers[layer.name] = layer;
-        });
-
-        tile.source.layers.forEach(function(name) {
-          map.add_layer(sourceLayers[name]);
-        });
-      });
-
-      map.extent = mercator.bbox(x, y, z, false, "900913");
-
-      var opts = {
-        tolerance: 0,
-        simplify: 0,
-        simplify_algorithm: "radial-distance",
-        buffer_size: map.bufferSize
-      };
-
-      return map.render(new mapnik.VectorTile(z, x, y), opts, function(err, dst) {
-
-        var roads = tiles[0].toJSON().filter(function(layer) {
-          return layer.name === "road";
-        })[0];
-
-        console.log("source road count:", roads.features.length);
-
-        roads = dst.toJSON().filter(function(layer) {
-          return layer.name === "road";
-        })[0];
-
-        console.log("target road count:", roads.features.length);
-
+      return zlib.deflate(dst.getData(), function(err, data) {
         if (err) {
           console.warn(err);
-          return res.send(500);
         }
 
-        return zlib.deflate(dst.getData(), function(err, data) {
-          pool.release(map);
+        var ttl = Math.min.apply(null, tiles.map(function(t) {
+          // TODO default TTL?
+          return t.ttl;
+        }).filter(function(ttl) {
+          return !!ttl;
+        }));
 
-          if (err) {
-            console.warn(err);
-          }
+        if (ttl === Infinity) {
+          // no TTLs were provided--assume the worst
+          res.set("Cache-Control", "max-age=0");
+        } else {
+          res.set("Cache-Control", util.format("max-age=%d", ttl));
+        }
 
-          var ttl = Math.min.apply(null, tiles.map(function(t) {
-            // TODO default TTL?
-            return t.ttl;
-          }).filter(function(ttl) {
-            return !!ttl;
-          }));
-
-          if (ttl === Infinity) {
-            // no TTLs were provided--assume the worst
-            res.set("Cache-Control", "max-age=0");
-          } else {
-            res.set("Cache-Control", util.format("max-age=%d", ttl));
-          }
-
-          res.set("Content-Type", "application/x-protobuf");
-          res.set("Content-Encoding", "deflate");
-          return res.send(data);
-        });
+        res.set("Content-Type", "application/x-protobuf");
+        res.set("Content-Encoding", "deflate");
+        return res.send(data);
       });
     });
   });
 });
 
 app.get("/:layers.json", function(req, res) {
-  var sources = getSources(req.params.layers);
+  // TODO default minzoom/maxzoom/bounds
+  var sources = getSources(req.params.layers),
+      tileSources = sources.map(function(source) {
+        return SOURCES[source.source];
+      });
 
   // TODO sort this when multiple layers are specified in a different order
   // like "mapbox.mapbox-streets-v3[waterway;landuse]"
   var vectorLayers = sources.map(function(source) {
     return SOURCES[source.source].vector_layers.filter(function(layer) {
-      return source.layers.indexOf(layer.id) >= 0;
+      return source.layers.length === 0 ||
+             source.layers.indexOf(layer.id) >= 0;
     });
   }).reduce(function(a, b) {
     return a.concat(b);
   }, []);
 
+  var minzoom = Math.min.apply(null, tileSources.map(function(x) {
+    return x.minzoom;
+  }));
+
+  var maxzoom = Math.max.apply(null, tileSources.map(function(x) {
+    return x.maxzoom;
+  }));
+
   return res.send({
-    "attribution": "",
-    "bounds": [ -180, -85.0511, 180, 85.0511 ],
+    "attribution": "", // TODO merge attributions
+    "bounds": [ -180, -85.0511, 180, 85.0511 ], // TODO
     "center": [ -122.3782, 37.7706, 12 ],
     "format": "pbf",
-    "id": "custom.custom-vtiles",
-    "maskLevel": 8, // TODO
-    "maxzoom": 14, // TODO
-    "minzoom": 0, // TODO
-    "name": "Tiled Vector Remix",
+    "id": "custom.custom-vtiles", // TODO
+    "maskLevel": 8, // TODO how should this relate to source maskLevels?
+    "maxzoom": maxzoom,
+    "minzoom": minzoom,
+    "name": "Tiled Vector Remix", // TODO
     "scheme": "xyz",
     "tilejson": "2.0.0",
     "tiles": [
-      util.format("http://%s:%d/%s/{z}/{x}/{y}.vtile", os.hostname(), 8080, req.params.layers)
+      util.format("http://%s:%d/%s/{z}/{x}/{y}.vtile",
+                  os.hostname(),
+                  process.env.PORT || 8080,
+                  req.params.layers)
     ],
     "vector_layers": vectorLayers
   });

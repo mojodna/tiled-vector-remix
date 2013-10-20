@@ -270,5 +270,208 @@
     "maskLevel": 8,
     "maxzoom": 14,
     "minzoom": 0
+  },
+  "osm.vectiles-highroad": {
+    "vector_layers": [
+      {
+        "minzoom": 10,
+        "id": "road-lines",
+        "geometry": "line",
+        "fields": {
+          "kind": "Kind",
+          "sort_key": "Sort key (for layering).",
+          "is_link": "Link road? (yes, no)",
+          "is_tunnel": "Tunnel? (yes, no)",
+          "is_bridge": "Bridge? (yes, no)",
+          "railway": "Railway",
+          "highway": "Highway type (highway, major_road and minor_road)."
+        },
+        "description": "OpenStreetMap roads, highways, railways and paths matching the selection found in High Road."
+      }
+    ],
+    "tiles": [
+      "http://tile.openstreetmap.us/vectiles-highroad/{z}/{x}/{y}.json"
+    ],
+    "tilejson": "2.0.0",
+    "scheme": "xyz",
+    "name": "Road Lines",
+    "attribution": "",
+    "bounds": [
+      -180,
+      -85.0511,
+      180,
+      85.0511
+    ],
+    "center": [ -122.3782, 37.7706, 12 ],
+    "format": "GeoJSON",
+    "id": "osm.vectiles-highroad",
+    "maskLevel": 8,
+    "maxzoom": 20,
+    "minzoom": 10
+  },
+  "osm.vectiles-skeletron": {
+    "vector_layers": [
+      {
+        "minzoom": 12,
+        "id": "road-labels",
+        "geometry": "line",
+        "fields": {
+          "sort_key": "Sort key (for layering).",
+          "name": "Name.",
+          "highway": "Highway type (highway, major_road and minor_road)."
+        },
+        "description": "OpenStreetMap-derived, generalized and simplified street names using the Streets and Routes data set. At lower zoom levels, uses shortened street names for more compact labeling."
+      }
+    ],
+    "tiles": [
+      "http://tile.openstreetmap.us/vectiles-skeletron/{z}/{x}/{y}.json"
+    ],
+    "tilejson": "2.0.0",
+    "scheme": "xyz",
+    "name": "Road Labels",
+    "attribution": "",
+    "bounds": [
+      -180,
+      -85.0511,
+      180,
+      85.0511
+    ],
+    "center": [ -122.3782, 37.7706, 12 ],
+    "format": "GeoJSON",
+    "id": "osm.vectiles-skeletron",
+    "maskLevel": 8,
+    "maxzoom": 20,
+    "minzoom": 12
+  },
+  "osm.vectiles-buildings": {
+    "vector_layers": [
+      {
+        "minzoom": 12,
+        "id": "buildings",
+        "geometry": "polygon",
+        "fields": {},
+        "description": "Polygons from OpenStreetMap representing building outlines."
+      }
+    ],
+    "tiles": [
+      "http://tile.openstreetmap.us/vectiles-buildings/{z}/{x}/{y}.json"
+    ],
+    "tilejson": "2.0.0",
+    "scheme": "xyz",
+    "name": "Buildings",
+    "attribution": "",
+    "bounds": [
+      -180,
+      -85.0511,
+      180,
+      85.0511
+    ],
+    "center": [ -122.3782, 37.7706, 12 ],
+    "format": "GeoJSON",
+    "id": "osm.vectiles-buildings",
+    "maskLevel": 8,
+    "maxzoom": 20,
+    "minzoom": 12
+  },
+  "osm.vectiles-pois": {
+    "vector_layers": [
+      {
+        "minzoom": 9,
+        "id": "pois",
+        "geometry": "point",
+        "fields": {
+          "name": "Name.",
+          "kind": "A combination of aerialway, aeroway, natural, railway, tourism, and other tags."
+        },
+        "description": "Points of Interest from OpenStreetMap, based on per-zoom selections from the primary OSM.org Mapnik stylesheet."
+      }
+    ],
+    "tiles": [
+      "http://tile.openstreetmap.us/vectiles-pois/{z}/{x}/{y}.json"
+    ],
+    "tilejson": "2.0.0",
+    "scheme": "xyz",
+    "name": "POIs",
+    "attribution": "",
+    "bounds": [
+      -180,
+      -85.0511,
+      180,
+      85.0511
+    ],
+    "center": [ -122.3782, 37.7706, 12 ],
+    "format": "GeoJSON",
+    "id": "osm.vectiles-pois",
+    "maskLevel": 8,
+    "maxzoom": 20,
+    "minzoom": 9
+  },
+  "osm.vectiles-land-usages": {
+    "vector_layers": [
+      {
+        "minzoom": 4,
+        "id": "land-usages",
+        "geometry": "polygon",
+        "fields": {
+          "name": "Name.",
+          "kind": "Kind",
+          "area": "Area (numeric)."
+        },
+        "description": "Polygons from OpenStreetMap representing parks, forests, residential, commercial, industrial, cemetery, golf course, university, schools, sports and other areas. Derived from a combination of the tags landuse, leisure, natural, highway, and amenity."
+      }
+    ],
+    "tiles": [
+      "http://tile.openstreetmap.us/vectiles-land-usages/{z}/{x}/{y}.json"
+    ],
+    "tilejson": "2.0.0",
+    "scheme": "xyz",
+    "name": "Land Usages",
+    "attribution": "",
+    "bounds": [
+      -180,
+      -85.0511,
+      180,
+      85.0511
+    ],
+    "center": [ -122.3782, 37.7706, 12 ],
+    "format": "GeoJSON",
+    "id": "osm.vectiles-land-usages",
+    "maskLevel": 8,
+    "maxzoom": 20,
+    "minzoom": 4
+  },
+  "osm.vectiles-water-areas": {
+    "vector_layers": [
+      {
+        "minzoom": 0,
+        "id": "water-areas",
+        "geometry": "polygon",
+        "fields": {
+          "name": "Name.",
+          "kind": "Kind",
+          "area": "Area (numeric)."
+        },
+        "description": "Polygons from OpenStreetMap representing oceans, riverbanks and lakes. Derived from a combination of the tags waterway, natural, and landuse. Includes coastline-derived water polygons from openstreetmapdata.com."
+      }
+    ],
+    "tiles": [
+      "http://tile.openstreetmap.us/vectiles-water-areas/{z}/{x}/{y}.json"
+    ],
+    "tilejson": "2.0.0",
+    "scheme": "xyz",
+    "name": "Water Areas",
+    "attribution": "",
+    "bounds": [
+      -180,
+      -85.0511,
+      180,
+      85.0511
+    ],
+    "center": [ -122.3782, 37.7706, 12 ],
+    "format": "GeoJSON",
+    "id": "osm.vectiles-water-areas",
+    "maskLevel": 8,
+    "maxzoom": 20,
+    "minzoom": 0
   }
 }
