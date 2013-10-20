@@ -68,7 +68,7 @@ var fetch = function(task, callback) {
       task.x > xyz.maxX ||
       task.y < xyz.minY ||
       task.y > xyz.maxY) {
-    // outsize zoom range or bounds; skip
+    // outside zoom range or bounds; skip
     return callback();
   }
 
