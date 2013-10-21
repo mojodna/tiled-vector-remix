@@ -323,7 +323,6 @@ app.get("/:layers/:z/:x/:y.vtile", function(req, res) {
     });
 
     map.extent = mercator.bbox(x, y, z, false, "900913");
-    map.srs = "+init=epsg:3857";
 
     var opts = {
       tolerance: 0,
