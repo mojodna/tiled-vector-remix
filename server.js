@@ -324,6 +324,14 @@ app.get("/:layers/:z/:x/:y.vtile", function(req, res) {
 
     map.extent = mercator.bbox(x, y, z, false, "900913");
 
+    var dx = map.extent[2] - map.extent[0],
+        dy = map.extent[3] - map.extent[1];
+
+    map.bufferedExtent = [map.extent[0] - dx,
+                          map.extent[1] - dy,
+                          map.extent[2] + dx,
+                          map.extent[3] + dy];
+
     var opts = {
       tolerance: 0,
       simplify: 0,
