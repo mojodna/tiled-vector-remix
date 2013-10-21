@@ -60,6 +60,7 @@ var fetch = function(task, callback) {
 
   // TODO default source.{minzoom,maxzoom,bounds}
   var source = SOURCES[task.source.source];
+  task.source.info = source;
 
   var xyz = mercator.xyz(source.bounds, task.z);
 
@@ -321,6 +322,12 @@ app.get("/:layers/:z/:x/:y.vtile", function(req, res) {
         }
       });
     });
+
+    // if map.srs is set for PBF sources, nothing renders
+    // if map.srs is *not* set for GeoJSON sources, nothing renders
+    if (tiles[0].source.info.format !== "pbf") {
+      map.srs = "+init=epsg:3857";
+    }
 
     map.extent = mercator.bbox(x, y, z, false, "900913");
 
