@@ -19,6 +19,7 @@
     "sphericalmercator": "~1.0.2",
     "crequest": "~0.1.2",
     "lru-cache": "~2.3.1",
-    "d3": "~3.3.8"
+    "d3": "~3.3.8",
+    "topojson": "~1.4.3"
   }
 }

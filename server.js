@@ -12,7 +12,8 @@ var async = require("async"),
     LRU = require("lru-cache"),
     mapnik = require("mapnik"),
     request = require("crequest"),
-    mercator = new (require("sphericalmercator"))();
+    mercator = new (require("sphericalmercator"))(),
+    topojson = require("topojson");
 
 var app = express();
 
@@ -439,6 +440,89 @@ app.get("/:layers/:z/:x/:y.json", function(req, res) {
       layers.forEach(function(name) {
         if (sourceLayers[name]) {
           json[name] = tile.toGeoJSON(name);
+        }
+      });
+    });
+
+    var ttl = Math.min.apply(null, tiles.map(function(t) {
+      // TODO default TTL?
+      return t.ttl;
+    }).filter(function(ttl) {
+      return !!ttl;
+    }));
+
+    if (ttl === Infinity) {
+      // no TTLs were provided--assume the worst
+      res.set("Cache-Control", "max-age=0");
+    } else {
+      res.set("Cache-Control", util.format("max-age=%d", ttl));
+    }
+
+    return res.send(json);
+  });
+});
+
+app.get("/:layers/:z/:x/:y.topojson", function(req, res) {
+  var z = +req.params.z,
+      x = +req.params.x,
+      y = +req.params.y;
+
+  var sources = getSources(req.params.layers);
+
+  // be a good citizen and pass relevant headers on
+  var headers = {};
+
+  Object.keys(req.headers).forEach(function(key) {
+    if (["user-agent",
+         "referer",
+         "x-forwarded-for"].indexOf(key) >= 0) {
+      headers[key] = req.headers[key];
+    }
+  });
+
+  var tasks = sources.map(function(source) {
+    return {
+      z: z,
+      x: x,
+      y: y,
+      source: source,
+      headers: headers
+    };
+  });
+
+  return async.map(tasks, fetch, function(err, tiles) {
+    if (err) {
+      console.warn(err);
+      return res.send(500);
+    }
+
+    // ignore skipped tiles
+    tiles = tiles.filter(function(tile) {
+      return !!tile;
+    });
+
+    var sourceLayers = {},
+        json = {};
+
+    tiles.forEach(function(tile) {
+      tile.layers().filter(function(x) {
+        return tile.source.layers.length === 0 ||
+              tile.source.layers.indexOf(x.name) >= 0;
+      }).forEach(function(layer) {
+        // NOTE: if a layer with the same name appears more than once, the last
+        // one present will be rendered
+        sourceLayers[layer.name] = layer;
+      });
+
+      var layers = tile.source.layers;
+
+      if (layers.length === 0) {
+        layers = Object.keys(sourceLayers);
+      }
+
+      layers.forEach(function(name) {
+        if (sourceLayers[name]) {
+          json[name] = topojson.topology({collection: tile.toGeoJSON(name) });
         }
       });
     });
