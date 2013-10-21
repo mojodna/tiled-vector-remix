@@ -347,20 +347,6 @@ app.get("/:layers/:z/:x/:y.vtile", function(req, res) {
     };
 
     return map.render(new mapnik.VectorTile(z, x, y), opts, function(err, dst) {
-
-      // For debugging "dropped" features when filtering/reordering PBFs
-      // var roads = tiles[0].toJSON().filter(function(layer) {
-      //   return layer.name === "road";
-      // })[0];
-
-      // console.log("source road count:", roads.features.length);
-
-      // roads = dst.toJSON().filter(function(layer) {
-      //   return layer.name === "road";
-      // })[0];
-
-      // console.log("target road count:", roads.features.length);
-
       if (err) {
         console.warn(err);
         return res.send(500);
