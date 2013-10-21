@@ -157,9 +157,18 @@ var fetch = function(task, callback) {
           var layer = new mapnik.Layer(info.id);
           layer.srs = "+init=epsg:4326";
 
-          var fields = Object.keys(info.fields);
+          var fields = Object.keys(info.fields),
+              features;
 
-          var data = body.features.map(function(f) {
+          if (body.features) {
+            // body is a single GeoJSON layer
+            features = body.features;
+          } else {
+            // body contains multiple GeoJSON layers
+            features = body[info.id].features;
+          }
+
+          var data = features.map(function(f) {
             var row = [JSON.stringify(f.geometry)];
 
             fields.map(function(k) {
@@ -169,7 +178,7 @@ var fetch = function(task, callback) {
             return row;
           });
 
-          if (body.features.length > 0) {
+          if (features.length > 0) {
             var csv = d3.csv.formatRows([["geojson"].concat(fields)]) + "\n";
             csv += d3.csv.formatRows(data);
 
