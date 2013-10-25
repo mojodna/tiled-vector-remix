@@ -325,6 +325,7 @@ app.get("/:layers/:z/:x/:y.vtile", function(req, res) {
 
     // if map.srs is set for PBF sources, nothing renders
     // if map.srs is *not* set for GeoJSON sources, nothing renders
+    // this makes it impossible to combine GeoJSON + PBF sources
     if (tiles[0].source.info.format !== "pbf") {
       map.srs = "+init=epsg:3857";
     }
