@@ -326,14 +326,6 @@ app.get("/:layers/:z/:x/:y.vtile", function(req, res) {
     map.srs = "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over";
     map.extent = mercator.bbox(x, y, z, false, "900913");
 
-    var dx = map.extent[2] - map.extent[0],
-        dy = map.extent[3] - map.extent[1];
-
-    map.bufferedExtent = [map.extent[0] - dx,
-                          map.extent[1] - dy,
-                          map.extent[2] + dx,
-                          map.extent[3] + dy];
-
     var opts = {
       tolerance: 0,
       simplify: 0,
