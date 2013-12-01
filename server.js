@@ -9,6 +9,7 @@ var async = require("async"),
     cors = require("cors"),
     d3 = require("d3"),
     express = require("express"),
+    geos = require("geos"),
     LRU = require("lru-cache"),
     mapnik = require("mapnik"),
     request = require("crequest"),
@@ -426,10 +427,68 @@ app.get("/:layers/:z/:x/:y.json", function(req, res) {
 
       layers.forEach(function(name) {
         if (sourceLayers[name]) {
-          json[name] = tile.toGeoJSON(name);
+          var features = [];
+          var fs = sourceLayers[name].datasource.featureset();
+
+          var feat;
+          while ((feat = fs.next(true))) {
+            var f = JSON.parse(feat.toJSON());
+            // assumes polygons
+            f.geometry.coordinates = f.geometry.coordinates.map(function(c) {
+              return c.map(function(x) {
+                return mercator.inverse(x);
+              });
+            });
+
+            for (var i = 0; i < f.geometry.coordinates.length; i++) {
+              // complete the rings
+              if (f.geometry.coordinates[i].length >= 3) {
+                f.geometry.coordinates[i].push(f.geometry.coordinates[i][0]);
+              }
+
+              // remove invalid rings
+              if (f.geometry.coordinates[i].length < 3) {
+                f.geometry.coordinates[i] = null;
+              }
+            }
+
+            // filter out stripped rings
+            f.geometry.coordinates = f.geometry.coordinates.filter(function(x) {
+              return !!x;
+            });
+            features.push(f);
+          }
+          json[name] = {
+            type: "FeatureCollection",
+            features: features
+          };
         }
       });
     });
+
+    /*
+     * How to union water with GEOS
+    var reader = new geos.GeoJSONReader();
+    var geom = json.water.features.map(function(x) {
+      return reader.read(x.geometry).buffer(0.0);
+    }).filter(function(x) {
+      return !!x;
+    });
+
+    var unioned = geom[0];
+
+    for (var i = 1; i < geom.length; i++) {
+      unioned = unioned.union(geom[i]);
+    }
+
+    json.water.features = [{
+      type: "Feature",
+      properties: {
+        osm_id: 0
+      },
+      geometry: unioned.toJSON()
+    }];
+    */
 
     var ttl = Math.min.apply(null, tiles.map(function(t) {
       // TODO default TTL?
